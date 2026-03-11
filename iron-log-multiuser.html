@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Iron Log"/>
+<title>Iron Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Barlow:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0d0d0d;font-family:'Barlow',sans-serif;color:#e8e2d9;overscroll-behavior:none}
+
+/* SETUP */
+.setup-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px 24px;text-align:center}
+.setup-logo{font-family:'Bebas Neue',sans-serif;font-size:56px;letter-spacing:4px;color:#b8f768;line-height:1;margin-bottom:6px}
+.setup-sub{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:2.5px;margin-bottom:36px}
+.setup-card{background:#141414;border:1px solid #222;border-radius:14px;padding:22px;width:100%;margin-bottom:16px;text-align:left}
+.setup-card-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:#555;margin-bottom:14px}
+.setup-step{display:flex;gap:12px;margin-bottom:13px;align-items:flex-start}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#b8f768;line-height:1;min-width:20px;margin-top:2px}
+.step-text{font-size:13px;color:#888;line-height:1.5}
+.step-text strong{color:#e8e2d9;display:block;margin-bottom:2px}
+.flabel{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:5px;font-family:'DM Mono',monospace}
+.setup-input{width:100%;background:#0d0d0d;border:1px solid #333;border-radius:8px;color:#b8f768;font-family:'DM Mono',monospace;font-size:12px;padding:11px 12px;outline:none;margin-bottom:10px}
+.setup-input:focus{border-color:#b8f768}
+.btn-setup{width:100%;padding:15px;background:#b8f768;color:#0d0d0d;border:none;border-radius:10px;font-family:'Barlow',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px 24px;text-align:center}
+.login-logo{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:5px;color:#b8f768;line-height:1;margin-bottom:4px}
+.login-tagline{font-size:11px;color:#2e2e2e;text-transform:uppercase;letter-spacing:3px;margin-bottom:56px}
+.login-card{background:#141414;border:1px solid #1e1e1e;border-radius:16px;padding:26px 22px;width:100%;max-width:340px}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#666;margin-bottom:6px}
+.login-desc{font-size:13px;color:#3a3a3a;margin-bottom:22px;line-height:1.6}
+.btn-google{width:100%;padding:14px;background:#fff;color:#111;border:none;border-radius:10px;font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s}
+.btn-google svg{width:20px;height:20px;flex-shrink:0}
+.login-footer{margin-top:18px;font-size:11px;color:#2a2a2a;line-height:1.6}
+
+/* APP */
+.app{max-width:480px;margin:0 auto;padding-bottom:90px;min-height:100vh;display:none}
+
+/* HEADER */
+.header{padding:48px 20px 14px;border-bottom:1px solid #1a1a1a;position:sticky;top:0;background:rgba(13,13,13,0.94);backdrop-filter:blur(14px);z-index:10}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;position:relative}
+.app-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;color:#e8e2d9;line-height:1}
+.user-btn{display:flex;align-items:center;gap:8px;background:#181818;border:1px solid #222;border-radius:22px;padding:6px 10px 6px 5px;cursor:pointer}
+.avatar{width:26px;height:26px;border-radius:50%;background:#b8f768;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:#0d0d0d;overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.uname{font-size:11px;color:#555;font-family:'DM Mono',monospace;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.macro-bar{display:flex;gap:8px;margin-top:12px}
+.mpill{flex:1;background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:9px 6px;text-align:center}
+.mval{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1}
+.mval.g{color:#b8f768}.mval.o{color:#ff8c42}.mval.b{color:#7eb8f7}
+.mlbl{font-size:9px;color:#444;margin-top:3px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.pbwrap{margin-top:11px;background:#111;border-radius:4px;overflow:hidden;height:5px;border:1px solid #1e1e1e}
+.pbfill{height:100%;background:linear-gradient(90deg,#b8f768,#7ef7a8);border-radius:4px;transition:width 0.4s}
+.pblbl{display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:#333;font-family:'DM Mono',monospace}
+
+/* STATUS */
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:5px 20px;background:#060d01;border-bottom:1px solid #0d1a03}
+.sdot{font-family:'DM Mono',monospace;font-size:10px;color:#3a6a1a;letter-spacing:.5px}
+.sdate{font-family:'DM Mono',monospace;font-size:10px;color:#252525}
+
+/* TABS */
+.tabs{display:flex;padding:12px 20px 0;border-bottom:1px solid #1a1a1a}
+.tab{flex:1;padding:10px 4px;text-align:center;background:none;border:none;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:#333;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px}
+.tab.active{color:#b8f768;border-bottom-color:#b8f768}
+
+/* SECTION */
+.section{padding:16px 20px}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:#3a3a3a;margin-bottom:11px}
+
+/* CARD */
+.card{background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:14px;margin-bottom:11px}
+
+/* INPUTS */
+select,input[type="number"],input[type="text"]{background:#0d0d0d;border:1px solid #252525;border-radius:8px;color:#e8e2d9;font-family:'Barlow',sans-serif;font-size:14px;padding:9px 11px;outline:none;transition:border-color .2s;width:100%}
+select:focus,input:focus{border-color:#b8f768}
+.igrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.igroup{display:flex;flex-direction:column;gap:5px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mpreview{margin-top:8px;padding:8px 10px;background:#0a0a0a;border-radius:6px;font-size:11px;color:#3a3a3a;font-family:'DM Mono',monospace;line-height:1.7;border:1px solid #161616}
+
+/* PHOTO */
+.photo-zone{margin-top:10px;border:1px dashed #2a2a2a;border-radius:8px;overflow:hidden;cursor:pointer;position:relative;transition:border-color .2s}
+.photo-zone:hover{border-color:#b8f768}
+.photo-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:6px}
+.photo-placeholder span:first-child{font-size:24px;opacity:.4}
+.photo-placeholder span:last-child{font-size:11px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:'DM Mono',monospace}
+.photo-preview{width:100%;max-height:180px;object-fit:cover;display:block}
+.photo-remove{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:1px solid #444;color:#ccc;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:700}
+input[type="file"]{display:none}
+
+/* BUTTONS */
+.btn-primary{background:#b8f768;color:#0d0d0d;width:100%;padding:12px;margin-top:12px;font-family:'Barlow',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:all .15s}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:#444;border:1px solid #252525;padding:6px 10px;font-size:11px;font-family:'Barlow',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:6px;cursor:pointer}
+.btn-ghost:hover{color:#ff6b6b;border-color:#ff6b6b}
+.trow{display:flex;gap:7px;margin-bottom:12px}
+.btoggle{flex:1;padding:8px;border-radius:7px;border:1px solid #1e1e1e;cursor:pointer;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:transparent;color:#3a3a3a;transition:all .15s}
+.btoggle.active{background:#b8f768;color:#0d0d0d;border-color:#b8f768}
+
+/* LOG ITEMS */
+.litem{background:#0d0d0d;border:1px solid #181818;border-radius:9px;margin-bottom:8px;overflow:hidden;animation:slin .2s ease}
+@keyframes slin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.litem-main{display:flex;justify-content:space-between;align-items:center;padding:10px 13px}
+.lname{font-weight:600;font-size:14px;color:#ddd8cf}
+.ldetail{font-family:'DM Mono',monospace;font-size:10px;color:#3a3a3a;margin-top:2px}
+.lright{display:flex;align-items:center;gap:9px}
+.lmet{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px}
+.lmet.g{color:#b8f768}.lmet.o{color:#ff8c42}
+
+/* MEAL PHOTO THUMBNAIL */
+.meal-photo{width:100%;max-height:160px;object-fit:cover;display:block;border-top:1px solid #1a1a1a}
+
+/* COACH COMMENT */
+.coach-comment{padding:9px 13px;background:#070e01;border-top:1px solid #0f1f03;display:flex;gap:8px;align-items:flex-start}
+.coach-tag{font-family:'DM Mono',monospace;font-size:9px;color:#4a8a20;text-transform:uppercase;letter-spacing:1px;margin-top:1px;white-space:nowrap}
+.coach-text{font-size:12px;color:#8ab870;line-height:1.5}
+
+/* TOTAL ROW */
+.trow-sum{display:flex;justify-content:space-between;padding:11px 13px;background:#080808;border:1px solid #161616;border-radius:8px;margin-top:3px}
+.tlbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#3a3a3a}
+.tval{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:#b8f768}
+
+/* SUMMARY */
+.scard{background:#141414;border:1px solid #1a1a1a;border-radius:10px;padding:14px;margin-bottom:11px}
+.sc-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#2e2e2e;font-weight:700;margin-bottom:8px;font-family:'DM Mono',monospace}
+.sc-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #141414;font-size:13px;color:#555}
+.sc-row:last-child{border-bottom:none}
+.sc-row .v{color:#e0dbd2;font-weight:600}
+
+/* COACH SECTION */
+.coach-banner{background:#070e01;border:1px solid #1a3a0a;border-radius:10px;padding:14px;margin-bottom:11px}
+.cb-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#3a6a1a;font-weight:700;margin-bottom:10px;font-family:'DM Mono',monospace}
+.cb-item{padding:9px 0;border-bottom:1px solid #0d1f06}
+.cb-item:last-child{border-bottom:none}
+.cb-meal{font-size:13px;color:#7ab850;font-weight:600}
+.cb-date{font-size:10px;color:#2a4a16;font-family:'DM Mono',monospace;margin-top:2px}
+.cb-msg{font-size:12px;color:#5a8a3a;margin-top:4px;line-height:1.5}
+
+/* EMPTY */
+.empty{text-align:center;padding:32px 20px}
+.ei{font-size:28px;margin-bottom:8px;opacity:.25}
+.et{font-size:11px;color:#2a2a2a;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+
+/* NAV */
+.nav-bot{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(9,9,9,.97);backdrop-filter:blur(20px);border-top:1px solid #161616;display:flex;padding:8px 10px 24px;z-index:20}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:none;border:none;cursor:pointer;border-radius:8px}
+.nicon{font-size:20px;color:#2a2a2a;transition:color .15s}
+.nlbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2a2a2a;font-family:'Barlow',sans-serif}
+.nbtn.active .nicon,.nbtn.active .nlbl{color:#b8f768}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #1e1e1e;border-top-color:#b8f768;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;justify-content:center;padding:28px;color:#2a2a2a;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px}
+
+/* TOAST */
+.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);background:#070e01;border:1px solid #4a8a20;color:#b8f768;font-family:'DM Mono',monospace;font-size:11px;padding:9px 18px;border-radius:20px;letter-spacing:1px;z-index:999;animation:tin .25s ease;pointer-events:none;white-space:nowrap}
+.toast.err{background:#1a0505;border-color:#8a2020;color:#f76868}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* DROPDOWN */
+.dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#181818;border:1px solid #252525;border-radius:10px;padding:8px;min-width:180px;z-index:50;animation:tin .2s ease}
+.ditem{padding:9px 12px;font-size:13px;color:#777;cursor:pointer;border-radius:6px;font-family:'Barlow',sans-serif}
+.ditem:hover{background:#222;color:#e8e2d9}
+.ditem.red:hover{color:#ff6b6b}
+.demail{padding:8px 12px 6px;font-size:10px;color:#2e2e2e;font-family:'DM Mono',monospace;border-bottom:1px solid #1e1e1e;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setupScreen" class="setup-screen" style="display:none">
+  <div class="setup-logo">IRON LOG</div>
+  <div class="setup-sub">One-time setup</div>
+  <div class="setup-card">
+    <div class="setup-card-title">CONNECT SUPABASE + SHEETS</div>
+    <div class="setup-step"><div class="step-num">1</div><div class="step-text"><strong>Create free Supabase project</strong>supabase.com → New Project → run the supabase-setup.sql file in SQL Editor</div></div>
+    <div class="setup-step"><div class="step-num">2</div><div class="step-text"><strong>Enable Google Login</strong>Authentication → Providers → Google → enable → add your app URL as redirect URL</div></div>
+    <div class="setup-step"><div class="step-num">3</div><div class="step-text"><strong>Set up Google Sheets</strong>Create blank Sheet → Extensions → Apps Script → paste Code.gs → Deploy as Web App</div></div>
+    <div class="setup-step"><div class="step-num">4</div><div class="step-text"><strong>Paste your keys below</strong></div></div>
+    <div class="flabel">Supabase Project URL</div>
+    <input type="text" class="setup-input" id="sbUrl" placeholder="https://xxxx.supabase.co"/>
+    <div class="flabel">Supabase Anon Key</div>
+    <input type="text" class="setup-input" id="sbKey" placeholder="eyJhbGci..."/>
+    <div class="flabel">Google Apps Script URL (for coach Sheets)</div>
+    <input type="text" class="setup-input" id="gsUrl" placeholder="https://script.google.com/macros/s/.../exec"/>
+  </div>
+  <button class="btn-setup" onclick="saveConfig()">SAVE & CONTINUE →</button>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen" style="display:none">
+  <div class="login-logo">IRON LOG</div>
+  <div class="login-tagline">Track. Lift. Eat. Repeat.</div>
+  <div class="login-card">
+    <div class="login-title">WELCOME</div>
+    <div class="login-desc">Sign in with Google. Your data is private — only you and your coach can see it.</div>
+    <button class="btn-google" onclick="googleLogin()">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <div class="login-footer">Your meals, photos & workouts are stored securely.<br>No one else can see your data.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="app">
+  <div class="header" id="hdr"></div>
+  <div class="sbar" id="sbar"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="content"></div>
+  <div class="nav-bot" id="nav"></div>
+</div>
+
+<!-- Hidden file input for camera -->
+<input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)"/>
+
+<script>
+// ── KEYS ──────────────────────────────────────────────────
+const K_URL = "il_sb_url", K_KEY = "il_sb_key", K_GS = "il_gs_url";
+
+const EX = ["Bench Press","Squat","Deadlift","Pull-Up","Overhead Press","Barbell Row","Incline Press","Leg Press","Lat Pulldown","Dumbbell Curl","Tricep Dip","Cable Fly","Romanian Deadlift","Hip Thrust","Face Pull","Arnold Press","Hammer Curl","Skull Crusher","Calf Raise","Plank"];
+const MFOODS = [
+  {name:"Chicken Breast 100g",cal:165,p:31,c:0,f:4},
+  {name:"White Rice 100g",cal:130,p:3,c:28,f:0},
+  {name:"Egg (1 whole)",cal:78,p:6,c:1,f:5},
+  {name:"Oats 100g",cal:389,p:17,c:66,f:7},
+  {name:"Banana",cal:89,p:1,c:23,f:0},
+  {name:"Whey Protein Scoop",cal:120,p:24,c:3,f:2},
+  {name:"Sweet Potato 100g",cal:86,p:2,c:20,f:0},
+  {name:"Greek Yogurt 100g",cal:59,p:10,c:4,f:0},
+  {name:"Almonds 30g",cal:174,p:6,c:6,f:15},
+  {name:"Salmon 100g",cal:208,p:20,c:0,f:13},
+  {name:"Brown Rice 100g",cal:112,p:2,c:23,f:1},
+  {name:"Peanut Butter 30g",cal:188,p:8,c:6,f:16},
+];
+
+let sb=null, user=null, gsUrl="";
+let CAL_GOAL=2500, PROTEIN_GOAL=180;
+
+let S = {
+  tab:"workout", workouts:[], meals:[], comments:[], loading:false, dropdown:false,
+  ex:EX[0], sets:3, reps:10, weight:60,
+  mmode:"quick", smeal:MFOODS[0].name, mqty:1,
+  cname:"", ccal:"", cprot:"",
+  photo:null, photoUrl:null   // captured photo
+};
+const set = u => { Object.assign(S, u); render(); };
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  const url = localStorage.getItem(K_URL);
+  const key = localStorage.getItem(K_KEY);
+  gsUrl = localStorage.getItem(K_GS) || "";
+
+  if (!url || !key) { show("setupScreen"); return; }
+  sb = supabase.createClient(url, key);
+
+  const { data:{session} } = await sb.auth.getSession();
+  if (session) { user=session.user; await boot(); }
+  else show("loginScreen");
+
+  sb.auth.onAuthStateChange(async (ev, sess) => {
+    if (ev==="SIGNED_IN" && sess) { user=sess.user; await boot(); }
+    else if (ev==="SIGNED_OUT") { user=null; show("loginScreen"); }
+  });
+}
+
+async function boot() {
+  show("mainApp");
+  await Promise.all([loadToday(), loadGoals(), loadComments()]);
+  render();
+}
+
+function show(id) {
+  ["setupScreen","loginScreen","mainApp"].forEach(s => {
+    const el = document.getElementById(s);
+    if(el) el.style.display = s===id ? (id==="mainApp"?"block":"flex") : "none";
+  });
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+async function googleLogin() {
+  await sb.auth.signInWithOAuth({ provider:"google", options:{ redirectTo:location.href } });
+}
+async function signOut() { await sb.auth.signOut(); set({dropdown:false}); }
+
+function saveConfig() {
+  const u=document.getElementById("sbUrl").value.trim();
+  const k=document.getElementById("sbKey").value.trim();
+  const g=document.getElementById("gsUrl").value.trim();
+  if(!u||!k) { toast("Fill Supabase URL and Key",true); return; }
+  localStorage.setItem(K_URL,u); localStorage.setItem(K_KEY,k); localStorage.setItem(K_GS,g);
+  gsUrl=g; init();
+}
+
+// ── DATA ──────────────────────────────────────────────────
+const today = () => new Date().toISOString().split("T")[0];
+
+async function loadToday() {
+  const [w,m] = await Promise.all([
+    sb.from("workouts").select("*").eq("logged_date",today()).order("created_at",{ascending:false}),
+    sb.from("meals").select("*").eq("logged_date",today()).order("created_at",{ascending:false})
+  ]);
+  S.workouts = w.data||[]; S.meals = m.data||[];
+}
+
+async function loadGoals() {
+  if (!gsUrl) return;
+  const name = user.user_metadata?.name||"Member";
+  const res = await gs("getGoals", { name, email:user.email });
+  if (res && !res.error) {
+    CAL_GOAL = res.calorieGoal||2500;
+    PROTEIN_GOAL = res.proteinGoal||180;
+  }
+}
+
+async function loadComments() {
+  if (!gsUrl) return;
+  const res = await gs("getComments", { email:user.email });
+  if (res && res.comments) S.comments = res.comments;
+}
+
+async function addWorkout() {
+  const w = { user_id:user.id, exercise:S.ex, sets:+S.sets, reps:+S.reps, weight:+S.weight, logged_date:today() };
+  const { data, error } = await sb.from("workouts").insert(w).select().single();
+  if (error) { toast("Save failed",true); return; }
+  set({ workouts:[data,...S.workouts] });
+  // Push to Sheets
+  gs("addWorkout",{ name:user.user_metadata?.name||"Member", email:user.email,
+    exercise:S.ex, sets:S.sets, reps:S.reps, weight:S.weight });
+  toast("✓ Workout saved");
+}
+
+async function addMeal() {
+  let name, cal, prot;
+  if (S.mmode==="quick") {
+    const b = MFOODS.find(x=>x.name===S.smeal);
+    name=`${b.name} ×${S.mqty}`; cal=Math.round(b.cal*S.mqty); prot=Math.round(b.p*S.mqty);
+  } else {
+    if(!S.cname||!S.ccal){toast("Fill name & calories",true);return;}
+    name=S.cname; cal=+S.ccal; prot=+(S.cprot||0);
+  }
+
+  // Upload photo if any
+  let photoUrl = null;
+  if (S.photo) {
+    const ext = S.photo.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { data:upData, error:upErr } = await sb.storage.from("meal-photos").upload(path, S.photo);
+    if (!upErr) {
+      const { data:{ publicUrl } } = sb.storage.from("meal-photos").getPublicUrl(path);
+      photoUrl = publicUrl;
+    }
+  }
+
+  const meal = { user_id:user.id, name, calories:cal, protein:prot, photo_url:photoUrl, logged_date:today() };
+  const { data, error } = await sb.from("meals").insert(meal).select().single();
+  if (error) { toast("Save failed",true); return; }
+
+  set({ meals:[data,...S.meals], photo:null, photoUrl:null });
+
+  // Push to Sheets
+  gs("addMeal",{ name:user.user_metadata?.name||"Member", email:user.email,
+    mealName:name, calories:cal, protein:prot, photoUrl:photoUrl||"" });
+  toast("✓ Meal saved" + (photoUrl?" with photo":""));
+}
+
+async function delWorkout(id) {
+  await sb.from("workouts").delete().eq("id",id);
+  set({ workouts:S.workouts.filter(w=>w.id!==id) });
+}
+async function delMeal(id) {
+  await sb.from("meals").delete().eq("id",id);
+  set({ meals:S.meals.filter(m=>m.id!==id) });
+}
+
+// ── GOOGLE SHEETS HELPER ─────────────────────────────────
+async function gs(action, params={}) {
+  if (!gsUrl) return null;
+  try {
+    const u = new URL(gsUrl);
+    u.searchParams.set("action",action);
+    Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+    const r = await fetch(u.toString());
+    return await r.json();
+  } catch { return null; }
+}
+
+// ── PHOTO HANDLING ───────────────────────────────────────
+function triggerPhoto() { document.getElementById("photoInput").click(); }
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  // Compress before upload
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX = 800;
+      let w=img.width, h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      canvas.toBlob(blob => {
+        const compressed = new File([blob], file.name, {type:"image/jpeg"});
+        set({ photo:compressed, photoUrl:ev.target.result });
+      }, "image/jpeg", 0.75);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value="";
+}
+
+// ── TOAST ────────────────────────────────────────────────
+function toast(msg, isErr=false) {
+  const t=document.createElement("div");
+  t.className="toast"+(isErr?" err":"");
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function render() {
+  if (!user) return;
+  const totCal  = S.meals.reduce((s,m)=>s+(m.calories||0),0);
+  const totProt = S.meals.reduce((s,m)=>s+(m.protein||0),0);
+  const totVol  = S.workouts.reduce((s,w)=>s+(w.volume||w.sets*w.reps*w.weight),0);
+  const calPct  = Math.min((totCal/CAL_GOAL)*100,100);
+  const uname   = user.user_metadata?.name?.split(" ")[0]||"You";
+  const uav     = user.user_metadata?.avatar_url;
+  const dateStr = new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+
+  // HEADER
+  document.getElementById("hdr").innerHTML=`
+    <div class="header-top">
+      <div class="app-title">IRON LOG</div>
+      <button class="user-btn" onclick="set({dropdown:!S.dropdown})">
+        <div class="avatar">${uav?`<img src="${uav}"/>`:(uname[0]||"U").toUpperCase()}</div>
+        <span class="uname">${uname}</span>
+      </button>
+      ${S.dropdown?`<div class="dropdown">
+        <div class="demail">${user.email}</div>
+        <div class="ditem" onclick="Promise.all([loadToday(),loadGoals(),loadComments()]).then(()=>set({dropdown:false}))">↻ Refresh</div>
+        <div class="ditem" onclick="resetCfg()">⚙ Settings</div>
+        <div class="ditem red" onclick="signOut()">Sign out</div>
+      </div>`:""}
+    </div>
+    <div class="macro-bar">
+      <div class="mpill"><div class="mval g">${totCal}</div><div class="mlbl">KCAL</div></div>
+      <div class="mpill"><div class="mval o">${totProt}g</div><div class="mlbl">PROTEIN</div></div>
+      <div class="mpill"><div class="mval b">${S.workouts.length}</div><div class="mlbl">SETS</div></div>
+    </div>
+    <div class="pbwrap"><div class="pbfill" style="width:${calPct}%"></div></div>
+    <div class="pblbl"><span>CALORIE GOAL (set by coach)</span><span>${totCal} / ${CAL_GOAL}</span></div>
+  `;
+
+  document.getElementById("sbar").innerHTML=`
+    <span class="sdot">● LIVE — SUPABASE + SHEETS</span>
+    <span class="sdate">${dateStr}</span>
+  `;
+
+  document.getElementById("tabs").innerHTML=`
+    <button class="tab ${S.tab==="workout"?"active":""}" onclick="set({tab:'workout'})">Workout</button>
+    <button class="tab ${S.tab==="meals"?"active":""}" onclick="set({tab:'meals'})">Meals</button>
+    <button class="tab ${S.tab==="coach"?"active":""}" onclick="set({tab:'coach'})">Coach</button>
+    <button class="tab ${S.tab==="summary"?"active":""}" onclick="set({tab:'summary'})">Summary</button>
+  `;
+
+  document.getElementById("nav").innerHTML=`
+    <button class="nbtn ${S.tab==="workout"?"active":""}" onclick="set({tab:'workout'})"><span class="nicon">🏋️</span><span class="nlbl">Workout</span></button>
+    <button class="nbtn ${S.tab==="meals"?"active":""}" onclick="set({tab:'meals'})"><span class="nicon">🍽️</span><span class="nlbl">Meals</span></button>
+    <button class="nbtn ${S.tab==="coach"?"active":""}" onclick="set({tab:'coach'})"><span class="nicon">💬</span><span class="nlbl">Coach</span></button>
+    <button class="nbtn ${S.tab==="summary"?"active":""}" onclick="set({tab:'summary'})"><span class="nicon">📊</span><span class="nlbl">Summary</span></button>
+  `;
+
+  const c=document.getElementById("content");
+  if(S.tab==="workout") c.innerHTML=renderWorkout(totVol);
+  else if(S.tab==="meals") c.innerHTML=renderMeals(totCal,totProt);
+  else if(S.tab==="coach") c.innerHTML=renderCoach();
+  else c.innerHTML=renderSummary(totCal,totProt,totVol);
+}
+
+function renderWorkout(totVol) {
+  return `<div class="section">
+    <div class="stitle">LOG EXERCISE</div>
+    <div class="card">
+      <div class="flabel">Exercise</div>
+      <select onchange="set({ex:this.value})" style="margin-bottom:10px">
+        ${EX.map(e=>`<option ${e===S.ex?"selected":""}>${e}</option>`).join("")}
+      </select>
+      <div class="igrid">
+        <div class="igroup"><div class="flabel">Sets</div><input type="number" value="${S.sets}" min="1" max="20" onchange="set({sets:this.value})"/></div>
+        <div class="igroup"><div class="flabel">Reps</div><input type="number" value="${S.reps}" min="1" max="100" onchange="set({reps:this.value})"/></div>
+        <div class="igroup"><div class="flabel">kg</div><input type="number" value="${S.weight}" min="0" max="500" onchange="set({weight:this.value})"/></div>
+      </div>
+      <button class="btn-primary" onclick="addWorkout()">+ LOG SET</button>
+    </div>
+    <div class="stitle" style="margin-top:4px">TODAY'S SETS</div>
+    ${S.workouts.length===0?`<div class="empty"><div class="ei">🏋️</div><div class="et">No sets logged yet</div></div>`:
+      S.workouts.map(w=>`
+        <div class="litem">
+          <div class="litem-main">
+            <div><div class="lname">${w.exercise}</div><div class="ldetail">${w.sets} sets × ${w.reps} reps</div></div>
+            <div class="lright">
+              <div><div class="lmet g">${w.weight}kg</div><div class="ldetail" style="text-align:right">${(w.volume||w.sets*w.reps*w.weight).toLocaleString()}kg vol</div></div>
+              <button class="btn-ghost" onclick="delWorkout('${w.id}')">✕</button>
+            </div>
+          </div>
+        </div>`).join("")
+    }
+    ${S.workouts.length>0?`<div class="trow-sum"><span class="tlbl">Total Volume</span><span class="tval">${totVol.toLocaleString()} KG</span></div>`:""}
+  </div>`;
+}
+
+function renderMeals(totCal) {
+  const b = MFOODS.find(m=>m.name===S.smeal);
+  return `<div class="section">
+    <div class="stitle">LOG MEAL</div>
+    <div class="card">
+      <div class="trow">
+        <button class="btoggle ${S.mmode==="quick"?"active":""}" onclick="set({mmode:'quick'})">Quick Add</button>
+        <button class="btoggle ${S.mmode==="custom"?"active":""}" onclick="set({mmode:'custom'})">Custom</button>
+      </div>
+      ${S.mmode==="quick"?`
+        <div class="flabel">Food Item</div>
+        <select onchange="set({smeal:this.value})" style="margin-bottom:10px">
+          ${MFOODS.map(m=>`<option ${m.name===S.smeal?"selected":""}>${m.name}</option>`).join("")}
+        </select>
+        <div class="flabel">Servings</div>
+        <input type="number" value="${S.mqty}" min="0.5" max="10" step="0.5" onchange="set({mqty:this.value})"/>
+        <div class="mpreview">${Math.round(b.cal*S.mqty)} kcal &nbsp;·&nbsp; ${Math.round(b.p*S.mqty)}g protein &nbsp;·&nbsp; ${Math.round(b.c*S.mqty)}g carbs</div>
+      `:`
+        <div class="flabel">Food Name</div>
+        <input type="text" value="${S.cname}" placeholder="e.g. Dal + Roti" oninput="set({cname:this.value})" style="margin-bottom:10px"/>
+        <div class="cgrid">
+          <div class="igroup"><div class="flabel">Calories</div><input type="number" value="${S.ccal}" placeholder="kcal" oninput="set({ccal:this.value})"/></div>
+          <div class="igroup"><div class="flabel">Protein (g)</div><input type="number" value="${S.cprot}" placeholder="g" oninput="set({cprot:this.value})"/></div>
+        </div>
+      `}
+
+      <!-- PHOTO CAPTURE -->
+      <div style="margin-top:10px">
+        <div class="flabel">Meal Photo (optional — coach will see this)</div>
+        <div class="photo-zone" onclick="triggerPhoto()">
+          ${S.photoUrl
+            ? `<img src="${S.photoUrl}" class="photo-preview"/><button class="photo-remove" onclick="event.stopPropagation();set({photo:null,photoUrl:null})">Remove</button>`
+            : `<div class="photo-placeholder"><span>📷</span><span>Tap to take photo</span></div>`
+          }
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="addMeal()">+ ADD MEAL</button>
+    </div>
+
+    <div class="stitle" style="margin-top:4px">TODAY'S FOOD</div>
+    ${S.meals.length===0?`<div class="empty"><div class="ei">🍽️</div><div class="et">No meals logged yet</div></div>`:
+      S.meals.map(m=>{
+        const cc = S.comments.find(c=>c.meal===m.name);
+        return `<div class="litem">
+          <div class="litem-main">
+            <div><div class="lname">${m.name}</div><div class="ldetail">${m.protein}g protein</div></div>
+            <div class="lright">
+              <div class="lmet o">${m.calories} kcal</div>
+              <button class="btn-ghost" onclick="delMeal('${m.id}')">✕</button>
+            </div>
+          </div>
+          ${m.photo_url?`<img src="${m.photo_url}" class="meal-photo"/>`:""}
+          ${m.coach_comment?`<div class="coach-comment"><span class="coach-tag">Coach</span><span class="coach-text">${m.coach_comment}</span></div>`:""}
+        </div>`;
+      }).join("")
+    }
+    ${S.meals.length>0?`<div class="trow-sum"><span class="tlbl">Total Calories</span><span class="tval">${totCal} KCAL</span></div>`:""}
+  </div>`;
+}
+
+function renderCoach() {
+  return `<div class="section">
+    <div class="stitle">COACH FEEDBACK</div>
+    <div class="coach-banner">
+      <div class="cb-title">📊 HOW THIS WORKS</div>
+      <div style="font-size:13px;color:#4a7a2a;line-height:1.6">
+        Your coach sees all your meals and photos in a Google Sheet.<br/>
+        When they leave a comment, it appears here and on your meal.
+      </div>
+    </div>
+    <div class="stitle" style="margin-top:4px">RECENT COMMENTS</div>
+    ${S.comments.length===0
+      ? `<div class="empty"><div class="ei">💬</div><div class="et">No coach feedback yet</div></div>`
+      : [...S.comments].reverse().map(c=>`
+          <div class="coach-banner">
+            <div class="cb-meal">${c.meal}</div>
+            <div class="cb-date">${c.date}</div>
+            <div class="cb-msg">${c.comment}</div>
+          </div>`).join("")
+    }
+    <div style="margin-top:8px">
+      <button class="btn-primary" style="background:#1a3a0a;color:#7ab850;margin-top:0" onclick="loadComments().then(()=>render())">↻ CHECK FOR NEW FEEDBACK</button>
+    </div>
+  </div>`;
+}
+
+function renderSummary(totCal, totProt, totVol) {
+  const cs = totCal>=CAL_GOAL*.9&&totCal<=CAL_GOAL*1.1?"✅ On Track":totCal<CAL_GOAL*.9?"⚠️ Under":"⚠️ Over";
+  const ps = totProt>=PROTEIN_GOAL?"✅ Hit":`⚠️ ${PROTEIN_GOAL-totProt}g to go`;
+  return `<div class="section">
+    <div class="stitle">TODAY</div>
+    <div class="scard">
+      <div class="sc-title">💪 WORKOUT</div>
+      <div class="sc-row"><span>Sets logged</span><span class="v">${S.workouts.length}</span></div>
+      <div class="sc-row"><span>Total reps</span><span class="v">${S.workouts.reduce((s,w)=>s+w.sets*w.reps,0)}</span></div>
+      <div class="sc-row"><span>Volume lifted</span><span class="v">${totVol.toLocaleString()} kg</span></div>
+    </div>
+    <div class="scard">
+      <div class="sc-title">🥗 NUTRITION</div>
+      <div class="sc-row"><span>Calories</span><span class="v" style="color:${totCal>CAL_GOAL?"#ff6b6b":"#b8f768"}">${totCal} / ${CAL_GOAL}</span></div>
+      <div class="sc-row"><span>Protein</span><span class="v" style="color:${totProt>=PROTEIN_GOAL?"#b8f768":"#ff8c42"}">${totProt}g / ${PROTEIN_GOAL}g</span></div>
+      <div class="sc-row"><span>Remaining</span><span class="v">${Math.max(CAL_GOAL-totCal,0)} kcal</span></div>
+      <div class="sc-row"><span>Meals with photos</span><span class="v">${S.meals.filter(m=>m.photo_url).length}</span></div>
+    </div>
+    <div class="scard">
+      <div class="sc-title">🎯 GOALS (set by coach)</div>
+      <div class="sc-row"><span>Calorie target</span><span class="v">${CAL_GOAL} kcal — ${cs}</span></div>
+      <div class="sc-row"><span>Protein target</span><span class="v">${PROTEIN_GOAL}g — ${ps}</span></div>
+      <div class="sc-row"><span>Coach feedback</span><span class="v">${S.comments.length} comments</span></div>
+    </div>
+  </div>`;
+}
+
+function resetCfg() {
+  if(confirm("Disconnect and reset?")) {
+    [K_URL,K_KEY,K_GS].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
