@@ -226,6 +226,11 @@ input[type="file"]{display:none}
 // ── KEYS ──────────────────────────────────────────────────
 const K_URL = "il_sb_url", K_KEY = "il_sb_key", K_GS = "il_gs_url";
 
+// ── HARDCODED CONFIG ──────────────────────────────────────
+const HARDCODED_URL = "https://jzzgvgvwqnqoglcjeohd.supabase.co";
+const HARDCODED_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6emd2Z3Z3cW5xb2dsY2plb2hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNTQxNzksImV4cCI6MjA4ODgzMDE3OX0.7Ss_Dqpbm6cBwWrNDP5Eoqh50uEsM8HgU0tTNKmJCOg";
+const HARDCODED_GS  = "https://script.google.com/macros/s/AKfycbwTyAQ4jFlMcbO6HjT7NYpScJywnSkXtWIYOGVVscxfowMlyrhMWoyZuEFcvsRI8xjA8A/exec";
+
 const EX = ["Bench Press","Squat","Deadlift","Pull-Up","Overhead Press","Barbell Row","Incline Press","Leg Press","Lat Pulldown","Dumbbell Curl","Tricep Dip","Cable Fly","Romanian Deadlift","Hip Thrust","Face Pull","Arnold Press","Hammer Curl","Skull Crusher","Calf Raise","Plank"];
 const MFOODS = [
   {name:"Chicken Breast 100g",cal:165,p:31,c:0,f:4},
@@ -256,12 +261,9 @@ const set = u => { Object.assign(S, u); render(); };
 
 // ── INIT ──────────────────────────────────────────────────
 async function init() {
-  const url = localStorage.getItem(K_URL);
-  const key = localStorage.getItem(K_KEY);
-  gsUrl = localStorage.getItem(K_GS) || "";
-
-  if (!url || !key) { show("setupScreen"); return; }
-  sb = supabase.createClient(url, key);
+  // Hardcoded — no setup screen for members
+  gsUrl = HARDCODED_GS;
+  sb = supabase.createClient(HARDCODED_URL, HARDCODED_KEY);
 
   const { data:{session} } = await sb.auth.getSession();
   if (session) { user=session.user; await boot(); }
@@ -639,8 +641,8 @@ function renderSummary(totCal, totProt, totVol) {
 }
 
 function resetCfg() {
-  if(confirm("Disconnect and reset?")) {
-    [K_URL,K_KEY,K_GS].forEach(k=>localStorage.removeItem(k));
+  if(confirm("Sign out and reset app?")) {
+    sb.auth.signOut();
     location.reload();
   }
 }
